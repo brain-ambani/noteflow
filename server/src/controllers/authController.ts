@@ -3,6 +3,23 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { sendEmail } from "@/utils/email";
 
+//
+const sendVerificationEmail = async (
+  userEmail: string,
+  verificationCode: string
+) => {
+  const emailBody = `
+      <h2>Verify Your Email</h2>
+      <p>Use the following code to verify your email:</p>
+      <h3>${verificationCode}</h3>
+      <p>This code expires in 10 minutes.</p>
+    `;
+
+  await sendEmail(userEmail, "Verify Your Email - NoteFlow", emailBody);
+
+  console.log(`📧 Verification email sent to ${userEmail}`);
+};
+
 //   signup controller
 export const signup = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -47,29 +64,18 @@ export const signup = async (req: Request, res: Response) => {
         verificationCodeExpires,
       },
     });
+    // log the verification code
+    console.log(`🟢 Verification Code for ${email}: ${verificationCode}`);
 
     // send verification email
+    await sendVerificationEmail(email, verificationCode);
 
-    const sendVerificationEmail = async (
-      userEmail: string,
-      verificationCode: string
-    ) => {
-      const emailBody = `
-        <h2>Verify Your Email</h2>
-        <p>Use the following code to verify your email:</p>
-        <h3>${verificationCode}</h3>
-        <p>This code expires in 10 minutes.</p>
-      `;
-
-      await sendEmail(userEmail, "Verify Your Email - NoteFlow", emailBody);
-
-      // Respond to client
-      res.status(201).json({
-        message:
-          "User registered successfully. Check your email for verification.",
-        userId: newUser.id,
-      });
-    };
+    // Respond to client
+    res.status(201).json({
+      message:
+        "User registered successfully. Check your email for verification.",
+      userId: newUser.id,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Something went wrong" });
