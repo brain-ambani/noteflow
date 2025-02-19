@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { sendEmail } from "@/utils/email";
 
-//
+// sendVerificationEmail function
 const sendVerificationEmail = async (
   userEmail: string,
   verificationCode: string
@@ -82,6 +82,7 @@ export const signup = async (req: Request, res: Response) => {
   }
 };
 
+// verifyEmail controller
 export const verifyEmail = async (req: Request, res: Response) => {
   const { email, verificationCode } = req.body;
 
@@ -128,6 +129,48 @@ export const verifyEmail = async (req: Request, res: Response) => {
     res.status(200).json({ message: "Email verified successfully!" });
   } catch (error) {
     console.error("Email verification error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+// user login controller
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  try {
+    // validate input fields
+    if (!email || !password) {
+      return res.status(400).json({ error: "All fields are required!" });
+    }
+
+    // check if user with the same email already exists
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    // compare the password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    // Respond to client
+    res.status(200).json({
+      message: "User logged in successfully",
+
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Something went wrong" });
   }
 };
