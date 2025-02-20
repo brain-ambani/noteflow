@@ -1,4 +1,4 @@
-import { createNote, getNotes } from "@/controllers/notes.controller";
+import { createNote, getNotes } from "@/controllers/notesController";
 import express from "express";
 
 const notesRouter = express.Router();

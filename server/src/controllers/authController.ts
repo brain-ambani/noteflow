@@ -2,6 +2,10 @@ import { db } from "@/db/db";
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { sendEmail } from "@/utils/email";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // sendVerificationEmail function
 const sendVerificationEmail = async (
@@ -140,7 +144,9 @@ export const login = async (req: Request, res: Response) => {
   try {
     // validate input fields
     if (!email || !password) {
-      return res.status(400).json({ error: "All fields are required!" });
+      return res
+        .status(400)
+        .json({ error: "Email and password are required!" });
     }
 
     // check if user with the same email already exists
@@ -159,16 +165,24 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Invalid email or password" });
     }
 
-    // Respond to client
-    res.status(200).json({
-      message: "User logged in successfully",
+    // Check if email is verified
+    if (!user.verified) {
+      return res.status(400).json({ error: "Email not verified!" });
+    }
 
-      user: {
+    // Generate JWT token
+    const token = jwt.sign(
+      {
         id: user.id,
-        name: user.name,
         email: user.email,
       },
-    });
+      process.env.JWT_SECRET as string,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({ message: "Login successful", token, user });
+
+    console.log(`🔐 User logged in: ${user.email}`);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Something went wrong" });
