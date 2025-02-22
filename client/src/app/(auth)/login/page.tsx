@@ -10,10 +10,10 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Redirect if already logged in
-  //   useEffect(() => {
-  //     const token = localStorage.getItem("accessToken");
-  //     if (token) router.push("/dashboard");
-  //   }, [router]);
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) router.push("/dashboard");
+  }, [router]);
 
   const onSubmit = async (data: any) => {
     setError(""); // Reset errors
